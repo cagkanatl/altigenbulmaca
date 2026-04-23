@@ -1,0 +1,994 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Altıgen Bulmaca Asistanı</title>
+  <style>
+    :root{
+      --bg:#0f1115;
+      --panel:#171a21;
+      --panel2:#1f2430;
+      --text:#e7eaf1;
+      --muted:#aab2c5;
+      --stroke:#2e3445;
+      --btn:#2a3347;
+      --btnHover:#343f58;
+      --accent:#76b7ff;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background:linear-gradient(180deg,#0c0f14 0%, #0f1115 50%, #0c0f14 100%);
+      color:var(--text);
+      display:flex;
+      justify-content:center;
+      padding:18px;
+    }
+    .wrap{
+      width:min(980px, 100%);
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+    }
+    .card{
+      background:var(--panel);
+      border:1px solid var(--stroke);
+      border-radius:16px;
+      padding:14px;
+      box-shadow:0 10px 30px rgba(0,0,0,.35);
+    }
+    .title{
+      display:flex;
+      align-items:baseline;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:8px;
+    }
+    .title h1{
+      font-size:18px;
+      margin:0;
+      letter-spacing:.2px;
+      font-weight:650;
+    }
+    .title .hint{
+      font-size:12px;
+      color:var(--muted);
+    }
+    .boardCard{
+      padding:12px 12px 10px;
+    }
+    .boardWrap{
+      width:100%;
+      overflow:auto;
+      border-radius:14px;
+      background:radial-gradient(1200px 420px at 50% 0%, #20263a 0%, #111522 55%, #0b0e15 100%);
+      border:1px solid var(--stroke);
+      padding:10px;
+    }
+    svg{display:block; width:100%; height:auto;}
+    .controls{
+      display:grid;
+      grid-template-columns: 1fr auto auto;
+      gap:10px;
+      align-items:center;
+    }
+    .controls .left{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    .row{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    label{
+      font-size:12px;
+      color:var(--muted);
+    }
+    input[type="range"]{
+      width:min(340px, 100%);
+      accent-color:var(--accent);
+    }
+    input[type="number"]{
+      width:72px;
+      padding:8px 10px;
+      border-radius:10px;
+      border:1px solid var(--stroke);
+      background:var(--panel2);
+      color:var(--text);
+      outline:none;
+    }
+    input[type="checkbox"]{
+      accent-color:var(--accent);
+    }
+    .checkLabel{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      user-select:none;
+    }
+    button{
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid var(--stroke);
+      background:var(--btn);
+      color:var(--text);
+      cursor:pointer;
+      font-weight:650;
+      letter-spacing:.2px;
+      transition:transform .05s ease, background .15s ease;
+      user-select:none;
+      white-space:nowrap;
+    }
+    button:hover{ background:var(--btnHover); }
+    button:active{ transform:translateY(1px); }
+    button[disabled]{
+      opacity:.55;
+      cursor:not-allowed;
+    }
+    .status{
+      margin-top:10px;
+      font-size:12px;
+      color:var(--muted);
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .pill{
+      padding:4px 8px;
+      border-radius:999px;
+      border:1px solid var(--stroke);
+      background:rgba(255,255,255,.03);
+    }
+    .legend{
+      display:grid;
+      grid-template-columns: repeat(6, minmax(0,1fr));
+      gap:10px;
+    }
+    @media (max-width: 720px){
+      .controls{ grid-template-columns: 1fr; }
+      .legend{ grid-template-columns: repeat(3, minmax(0,1fr)); }
+    }
+    .pieceCard{
+      background:var(--panel2);
+      border:1px solid var(--stroke);
+      border-radius:14px;
+      padding:10px;
+      display:flex;
+      gap:10px;
+      align-items:center;
+      min-height:74px;
+    }
+    .pieceLabel{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      min-width:44px;
+    }
+    .pieceLabel .id{
+      font-weight:800;
+      letter-spacing:.3px;
+      font-size:14px;
+    }
+    .pieceLabel .cells{
+      font-size:11px;
+      color:var(--muted);
+    }
+    .colorPick{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      margin-left:auto;
+      align-items:flex-end;
+    }
+    input[type="color"]{
+      width:42px;
+      height:30px;
+      padding:0;
+      border:none;
+      background:transparent;
+      cursor:pointer;
+    }
+    .miniSvg{
+      width:78px;
+      height:54px;
+      border-radius:10px;
+      border:1px dashed rgba(255,255,255,.12);
+      background:rgba(0,0,0,.12);
+      flex:0 0 auto;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      overflow:hidden;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card boardCard">
+      <div class="title">
+        <h1>Altıgen Bulmaca Asistanı</h1>
+        <div class="hint">Tahta: 5 satırlı altıgen petek • Parçalar: A–L</div>
+      </div>
+      <div class="boardWrap">
+        <svg id="boardSvg" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Bulmaca Tahtası"></svg>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="controls">
+        <div class="left">
+          <div class="row">
+            <label for="missingRange">Eksik parça sayısı:</label>
+            <input id="missingRange" type="range" min="1" max="12" value="6"/>
+            <input id="missingNum" type="number" min="1" max="12" value="6"/>
+          </div>
+
+          <div class="row">
+            <label class="checkLabel" title="Etkinleştirildiğinde: gizli parçalar birbirine bağlı kompakt bir küme oluşturur; gösterilen parçalar da birbirine bağlı olmalıdır.">
+              <input id="missingAdjacent" type="checkbox" />
+              Yan yana eksik (kompakt)
+            </label>
+          </div>
+
+          <div class="status" id="statusLine">
+            <span class="pill">Durum: <span id="statusText">Hazır</span></span>
+            <span class="pill">Gizlenenler: <span id="hiddenList">—</span></span>
+            <span class="pill">Yan yana eksik: <span id="adjText">Kapalı</span></span>
+          </div>
+        </div>
+
+        <button id="genBtn">Çözülebilir Bulmaca Üret</button>
+        <button id="revealBtn" disabled>Cevabı Göster</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="title">
+        <h1>Parça Renkleri (Lejant)</h1>
+        <div class="hint">Fiziksel setinize uyması için renkleri değiştirebilirsiniz</div>
+      </div>
+      <div class="legend" id="legend"></div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  // ------------------------------------------------------------
+  // 1) Board definition (axial coords, pointy-top)
+  // ------------------------------------------------------------
+  const BOARD_ROW_SPECS = [
+    { r: 0, qStart: 2, len: 11 },
+    { r: 1, qStart: 1, len: 11 },
+    { r: 2, qStart: 0, len: 12 },
+    { r: 3, qStart: 0, len: 11 },
+    { r: 4, qStart: 0, len: 11 },
+  ];
+
+  function buildBoardCells() {
+    const cells = [];
+    for (const row of BOARD_ROW_SPECS) {
+      for (let q = row.qStart; q < row.qStart + row.len; q++) {
+        cells.push({ q, r: row.r });
+      }
+    }
+    return cells;
+  }
+
+  const boardCells = buildBoardCells(); 
+  const N = boardCells.length;
+  const key = (q,r) => `${q},${r}`;
+  const boardIndex = new Map();
+  boardCells.forEach((c, i) => boardIndex.set(key(c.q,c.r), i));
+  const cellBits = Array.from({length: N}, (_,i) => 1n << BigInt(i));
+  const FULL_MASK = (1n << BigInt(N)) - 1n;
+
+  // ------------------------------------------------------------
+  // 2) Piece definitions (true hex-grid polyhexes) - YENİ RENKLER
+  // ------------------------------------------------------------
+  const PIECES = {
+    A: { color: "#dfcca5", coords: [[0,2],[1,2],[2,1],[3,0],[3,1]] },
+    B: { color: "#ff6600", coords: [[0,1],[1,1],[2,0],[2,1],[3,0]] },
+    C: { color: "#793b20", coords: [[0,2],[1,2],[2,2],[3,1],[4,0]] },
+    D: { color: "#cc0000", coords: [[0,1],[1,1],[2,1],[3,0],[3,1]] },
+    E: { color: "#ffffff", coords: [[0,1],[1,0],[1,1],[2,0],[2,1]] },
+    F: { color: "#2ec0ff", coords: [[0,1],[1,1],[2,0],[2,1],[3,1]] },
+    G: { color: "#078827", coords: [[0,1],[1,0],[1,1],[2,1],[3,0]] },
+    H: { color: "#ffdd00", coords: [[0,2],[1,1],[1,2],[2,0],[2,2]] },
+    I: { color: "#ffdd00", coords: [[0,1],[1,1],[2,1],[3,0]] },      
+    J: { color: "#737373", coords: [[0,0],[1,0],[1,1],[2,1]] },      
+    K: { color: "#cc0000", coords: [[0,1],[1,0],[1,1],[2,0]] },      
+    L: { color: "#078827", coords: [[0,1],[1,1],[2,0],[2,1]] },      
+  };
+
+  const PIECE_IDS = Object.keys(PIECES);
+
+  // ------------------------------------------------------------
+  // 3) Hex geometry helpers (axial<->cube, rotate/reflect)
+  // ------------------------------------------------------------
+  function axialToCube(q,r){
+    const x=q, z=r, y=-x-z;
+    return {x,y,z};
+  }
+  function cubeToAxial(c){ return [c.x, c.z]; }
+
+  function rotateCubeCW(c){
+    return { x: -c.z, y: -c.x, z: -c.y };
+  }
+  function reflectCube(c){
+    return { x: c.x, y: c.z, z: c.y };
+  }
+
+  function normalizeShapeAxial(points){
+    let minQ = Infinity, minR = Infinity;
+    for (const [q,r] of points){
+      if (q < minQ) minQ = q;
+      if (r < minR) minR = r;
+    }
+    const norm = points.map(([q,r]) => [q - minQ, r - minR]);
+    norm.sort((a,b) => a[0]-b[0] || a[1]-b[1]);
+    return norm;
+  }
+
+  function shapeKey(points){
+    return points.map(p => `${p[0]},${p[1]}`).join(";");
+  }
+
+  function getOrientations(baseCoords){
+    const cubes0 = baseCoords.map(([q,r]) => axialToCube(q,r));
+    const seen = new Set();
+    const out = [];
+
+    for (const doReflect of [false, true]){
+      let cubes = doReflect ? cubes0.map(reflectCube) : cubes0.slice();
+
+      for (let rot=0; rot<6; rot++){
+        const axial = cubes.map(cubeToAxial);
+        const norm = normalizeShapeAxial(axial);
+        const k = shapeKey(norm);
+        if (!seen.has(k)){
+          seen.add(k);
+          out.push(norm);
+        }
+        cubes = cubes.map(rotateCubeCW);
+      }
+    }
+    return out;
+  }
+
+  // ------------------------------------------------------------
+  // 4) Placement generation
+  // ------------------------------------------------------------
+  const placements = [];
+  const placementsByCell = Array.from({length:N}, () => []);
+
+  const pieceIdx = new Map(PIECE_IDS.map((id, i) => [id, i]));
+
+  function addPlacement(pieceId, cellIdxs){
+    let mask = 0n;
+    for (const idx of cellIdxs) mask |= cellBits[idx];
+    const p = { pieceId, pieceIdx: pieceIdx.get(pieceId), mask, cells: cellIdxs };
+    const pIndex = placements.length;
+    placements.push(p);
+    for (const idx of cellIdxs) placementsByCell[idx].push(pIndex);
+  }
+
+  function precomputePlacements(){
+    for (const id of PIECE_IDS){
+      const base = PIECES[id].coords;
+      const orientations = getOrientations(base);
+
+      for (const shape of orientations){
+        for (const [aq, ar] of shape){
+          const offsets = shape.map(([q,r]) => [q - aq, r - ar]);
+
+          for (let originIdx = 0; originIdx < N; originIdx++){
+            const origin = boardCells[originIdx];
+            const cellIdxs = [];
+            let ok = true;
+
+            for (const [dq, dr] of offsets){
+              const q = origin.q + dq;
+              const r = origin.r + dr;
+              const idx = boardIndex.get(key(q,r));
+              if (idx === undefined){ ok = false; break; }
+              cellIdxs.push(idx);
+            }
+            if (!ok) continue;
+
+            const uniq = Array.from(new Set(cellIdxs));
+            if (uniq.length !== cellIdxs.length) continue;
+
+            addPlacement(id, uniq);
+          }
+        }
+      }
+    }
+
+    for (const list of placementsByCell){
+      shuffleInPlace(list);
+    }
+  }
+
+  // ------------------------------------------------------------
+  // 5) Solver (randomized exact cover)
+  // ------------------------------------------------------------
+  function mulberry32(seed){
+    let a = seed >>> 0;
+    return function(){
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function shuffleInPlace(arr, rng=Math.random){
+    for (let i = arr.length - 1; i > 0; i--){
+      const j = Math.floor(rng() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  function solveOne(rng){
+    const solPlacements = [];
+    let usedMask = 0;
+    let occ = 0n;
+
+    function isUsedPiece(p){ return (usedMask & (1 << p.pieceIdx)) !== 0; }
+    function overlaps(p){ return (p.mask & occ) !== 0n; }
+
+    function pickNextCell(){
+      let bestCell = -1;
+      let bestCount = 1e9;
+
+      for (let i=0; i<N; i++){
+        if ((occ & cellBits[i]) !== 0n) continue;
+
+        let count = 0;
+        const list = placementsByCell[i];
+        for (let k=0; k<list.length; k++){
+          const p = placements[list[k]];
+          if (isUsedPiece(p)) continue;
+          if (overlaps(p)) continue;
+          count++;
+          if (count >= bestCount) break;
+        }
+        if (count === 0) return {cell: i, dead: true};
+        if (count < bestCount){
+          bestCount = count;
+          bestCell = i;
+          if (bestCount === 1) break;
+        }
+      }
+      return {cell: bestCell, dead: false};
+    }
+
+    function recurse(){
+      if (occ === FULL_MASK) return true;
+
+      const pick = pickNextCell();
+      if (pick.dead) return false;
+
+      const candIdxs = [];
+      for (const pi of placementsByCell[pick.cell]){
+        const p = placements[pi];
+        if (isUsedPiece(p)) continue;
+        if (overlaps(p)) continue;
+        candIdxs.push(pi);
+      }
+      shuffleInPlace(candIdxs, rng);
+
+      for (const pi of candIdxs){
+        const p = placements[pi];
+        solPlacements.push(pi);
+        const prevOcc = occ;
+        const prevUsed = usedMask;
+
+        occ = occ | p.mask;
+        usedMask = usedMask | (1 << p.pieceIdx);
+
+        if (recurse()) return true;
+
+        occ = prevOcc;
+        usedMask = prevUsed;
+        solPlacements.pop();
+      }
+      return false;
+    }
+
+    const ok = recurse();
+    return ok ? solPlacements : null;
+  }
+
+  // ------------------------------------------------------------
+  // 6) Rendering (SVG) - ALTIGEN (HEXAGON)
+  // ------------------------------------------------------------
+  const boardSvg = document.getElementById("boardSvg");
+
+  const SIZE = 22;
+  const SQRT3 = Math.sqrt(3);
+
+  function axialToPixel(q,r){
+    const x = SIZE * SQRT3 * (q + r/2);
+    const y = SIZE * 1.5 * r;
+    return {x,y};
+  }
+
+  function getHexPoints(cx, cy, size) {
+    let points = [];
+    for (let i = 0; i < 6; i++) {
+      const angle_deg = 60 * i - 30;
+      const angle_rad = Math.PI / 180 * angle_deg;
+      const px = cx + size * Math.cos(angle_rad);
+      const py = cy + size * Math.sin(angle_rad);
+      points.push(`${px},${py}`);
+    }
+    return points.join(" ");
+  }
+
+  let cellEls = [];
+  function initBoardSvg(){
+    let minX=Infinity, minY=Infinity, maxX=-Infinity, maxY=-Infinity;
+    const pts = boardCells.map(c => axialToPixel(c.q, c.r));
+    for (const p of pts){
+      minX = Math.min(minX, p.x);
+      minY = Math.min(minY, p.y);
+      maxX = Math.max(maxX, p.x);
+      maxY = Math.max(maxY, p.y);
+    }
+    const pad = SIZE * 2.2;
+    const vb = {
+      x: minX - pad,
+      y: minY - pad,
+      w: (maxX - minX) + pad*2,
+      h: (maxY - minY) + pad*2
+    };
+    boardSvg.setAttribute("viewBox", `${vb.x} ${vb.y} ${vb.w} ${vb.h}`);
+
+    while (boardSvg.firstChild) boardSvg.removeChild(boardSvg.firstChild);
+
+    const bg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    bg.setAttribute("x", vb.x);
+    bg.setAttribute("y", vb.y);
+    bg.setAttribute("width", vb.w);
+    bg.setAttribute("height", vb.h);
+    bg.setAttribute("rx", 18);
+    bg.setAttribute("fill", "rgba(0,0,0,0.18)");
+    bg.setAttribute("stroke", "rgba(255,255,255,0.08)");
+    boardSvg.appendChild(bg);
+
+    cellEls = boardCells.map((c, i) => {
+      const {x,y} = axialToPixel(c.q,c.r);
+      const g = document.createElementNS("http://www.w3.org/2000/svg","g");
+
+      const shadow = document.createElementNS("http://www.w3.org/2000/svg","polygon");
+      shadow.setAttribute("points", getHexPoints(x+1.2, y+1.6, SIZE*0.95));
+      shadow.setAttribute("fill", "rgba(0,0,0,0.35)");
+      g.appendChild(shadow);
+
+      const hex = document.createElementNS("http://www.w3.org/2000/svg","polygon");
+      hex.setAttribute("points", getHexPoints(x, y, SIZE*0.95));
+      hex.setAttribute("stroke", "rgba(255,255,255,0.16)");
+      hex.setAttribute("stroke-width", "1.4");
+      hex.setAttribute("data-idx", i);
+      g.appendChild(hex);
+
+      boardSvg.appendChild(g);
+      return hex;
+    });
+  }
+
+  // ------------------------------------------------------------
+  // 7) Legend UI (mini SVGs + color pickers) - ALTIGEN
+  // ------------------------------------------------------------
+  const legend = document.getElementById("legend");
+  const pieceColors = Object.fromEntries(PIECE_IDS.map(id => [id, PIECES[id].color]));
+
+  function renderLegend(){
+    legend.innerHTML = "";
+    for (const id of PIECE_IDS){
+      const item = document.createElement("div");
+      item.className = "pieceCard";
+
+      const mini = document.createElement("div");
+      mini.className = "miniSvg";
+
+      const miniSvg = document.createElementNS("http://www.w3.org/2000/svg","svg");
+      miniSvg.setAttribute("xmlns","http://www.w3.org/2000/svg");
+      miniSvg.setAttribute("width","74");
+      miniSvg.setAttribute("height","50");
+      mini.appendChild(miniSvg);
+
+      const label = document.createElement("div");
+      label.className = "pieceLabel";
+      const idEl = document.createElement("div");
+      idEl.className = "id";
+      idEl.textContent = id;
+      const cellsEl = document.createElement("div");
+      cellsEl.className = "cells";
+      cellsEl.textContent = `${PIECES[id].coords.length} hücre`;
+      label.appendChild(idEl);
+      label.appendChild(cellsEl);
+
+      const cp = document.createElement("div");
+      cp.className = "colorPick";
+      const cLabel = document.createElement("label");
+      cLabel.textContent = "Renk";
+      const input = document.createElement("input");
+      input.type = "color";
+      input.value = pieceColors[id];
+
+      input.addEventListener("input", () => {
+        pieceColors[id] = input.value;
+        drawMiniPiece(miniSvg, id);
+        renderBoard();
+      });
+
+      cp.appendChild(cLabel);
+      cp.appendChild(input);
+
+      item.appendChild(mini);
+      item.appendChild(label);
+      item.appendChild(cp);
+      legend.appendChild(item);
+
+      drawMiniPiece(miniSvg, id);
+    }
+  }
+
+  function drawMiniPiece(svg, id){
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+
+    const s = 8.5;
+    const coords = normalizeShapeAxial(PIECES[id].coords);
+
+    const pts = coords.map(([q,r]) => ({
+      x: s*SQRT3*(q + r/2),
+      y: s*1.5*r
+    }));
+    let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+    for (const p of pts){
+      minX=Math.min(minX,p.x); minY=Math.min(minY,p.y);
+      maxX=Math.max(maxX,p.x); maxY=Math.max(maxY,p.y);
+    }
+    const pad = s*2.4;
+    svg.setAttribute("viewBox", `${minX-pad} ${minY-pad} ${(maxX-minX)+pad*2} ${(maxY-minY)+pad*2}`);
+
+    for (const p of pts){
+      const shadow = document.createElementNS("http://www.w3.org/2000/svg","polygon");
+      shadow.setAttribute("points", getHexPoints(p.x+0.8, p.y+1.0, s*0.98));
+      shadow.setAttribute("fill", "rgba(0,0,0,0.32)");
+      svg.appendChild(shadow);
+
+      const hex = document.createElementNS("http://www.w3.org/2000/svg","polygon");
+      hex.setAttribute("points", getHexPoints(p.x, p.y, s*0.98));
+      hex.setAttribute("fill", pieceColors[id]);
+      hex.setAttribute("stroke", "rgba(255,255,255,0.22)");
+      hex.setAttribute("stroke-width", "1.0");
+      svg.appendChild(hex);
+    }
+  }
+
+  // ------------------------------------------------------------
+  // 8) App state + controls
+  // ------------------------------------------------------------
+  const missingRange = document.getElementById("missingRange");
+  const missingNum = document.getElementById("missingNum");
+  const missingAdjacent = document.getElementById("missingAdjacent");
+  const genBtn = document.getElementById("genBtn");
+  const revealBtn = document.getElementById("revealBtn");
+  const statusText = document.getElementById("statusText");
+  const hiddenList = document.getElementById("hiddenList");
+  const adjText = document.getElementById("adjText");
+
+  function clamp(n, lo, hi){ return Math.max(lo, Math.min(hi, n)); }
+
+  function syncMissingInputs(from){
+    let v = from === "range" ? Number(missingRange.value) : Number(missingNum.value);
+    v = clamp(v, 1, 12);
+    missingRange.value = String(v);
+    missingNum.value = String(v);
+  }
+
+  missingRange.addEventListener("input", () => syncMissingInputs("range"));
+  missingNum.addEventListener("input", () => syncMissingInputs("num"));
+
+  function syncAdjPill(){
+    adjText.textContent = missingAdjacent.checked ? "Açık" : "Kapalı";
+  }
+  missingAdjacent.addEventListener("change", syncAdjPill);
+  syncAdjPill();
+
+  let solutionCellToPiece = null;
+  let hiddenPieces = new Set();
+  let reveal = false;
+
+  function setStatus(msg){ statusText.textContent = msg; }
+
+  function renderBoard(){
+    if (!cellEls.length) return;
+
+    for (let i=0; i<N; i++){
+      const el = cellEls[i];
+      if (!solutionCellToPiece){
+        el.setAttribute("fill", "rgba(255,255,255,0.06)");
+        continue;
+      }
+      const pid = solutionCellToPiece[i];
+      const show = reveal || !hiddenPieces.has(pid);
+      const fill = show ? pieceColors[pid] : "rgba(255,255,255,0.06)";
+      el.setAttribute("fill", fill);
+    }
+
+    hiddenList.textContent = hiddenPieces.size
+      ? Array.from(hiddenPieces).sort().join(", ")
+      : "—";
+  }
+
+  function toggleReveal(){
+    if (!solutionCellToPiece) return;
+    reveal = !reveal;
+    revealBtn.textContent = reveal ? "Cevabı Gizle" : "Cevabı Göster";
+    renderBoard();
+  }
+
+  revealBtn.addEventListener("click", toggleReveal);
+
+  // ------------------------------------------------------------
+  // v2 helpers: piece adjacency + connected subset selection (COMPACT)
+  // ------------------------------------------------------------
+  const HEX_DIRS = [
+    [ 1, 0],
+    [-1, 0],
+    [ 0, 1],
+    [ 0,-1],
+    [ 1,-1],
+    [-1, 1],
+  ];
+
+  function buildPieceAdjacency(cellToPiece){
+    const adj = new Map();
+    for (const id of PIECE_IDS) adj.set(id, new Set());
+
+    for (let i=0; i<N; i++){
+      const a = cellToPiece[i];
+      const {q,r} = boardCells[i];
+
+      for (const [dq,dr] of HEX_DIRS){
+        const j = boardIndex.get(key(q+dq, r+dr));
+        if (j === undefined) continue;
+        const b = cellToPiece[j];
+        if (a && b && a !== b){
+          adj.get(a).add(b);
+          adj.get(b).add(a);
+        }
+      }
+    }
+    return adj;
+  }
+
+  function isConnectedSubset(subset, adj){
+    if (subset.size <= 1) return true;
+
+    const start = subset.values().next().value;
+    const seen = new Set([start]);
+    const stack = [start];
+
+    while (stack.length){
+      const v = stack.pop();
+      for (const nb of adj.get(v)){
+        if (subset.has(nb) && !seen.has(nb)){
+          seen.add(nb);
+          stack.push(nb);
+        }
+      }
+    }
+    return seen.size === subset.size;
+  }
+
+  function perimeterForHiddenPieces(hiddenSet, pieceToCells){
+    const hiddenCell = Array(N).fill(false);
+    for (const pid of hiddenSet){
+      const cells = pieceToCells.get(pid);
+      for (let i=0; i<cells.length; i++) hiddenCell[cells[i]] = true;
+    }
+
+    let per = 0;
+    for (let idx=0; idx<N; idx++){
+      if (!hiddenCell[idx]) continue;
+      const {q,r} = boardCells[idx];
+      for (const [dq,dr] of HEX_DIRS){
+        const j = boardIndex.get(key(q+dq, r+dr));
+        if (j === undefined || !hiddenCell[j]) per++;
+      }
+    }
+    return per;
+  }
+
+  function spanForHiddenPieces(hiddenSet, pieceToCells){
+    let minQ=Infinity, maxQ=-Infinity, minR=Infinity, maxR=-Infinity;
+
+    for (const pid of hiddenSet){
+      const cells = pieceToCells.get(pid);
+      for (let i=0; i<cells.length; i++){
+        const {q,r} = boardCells[cells[i]];
+        if (q < minQ) minQ = q;
+        if (q > maxQ) maxQ = q;
+        if (r < minR) minR = r;
+        if (r > maxR) maxR = r;
+      }
+    }
+    return (maxQ - minQ) + (maxR - minR);
+  }
+
+  function scoreHiddenSet(hiddenSet, pieceToCells){
+    const per = perimeterForHiddenPieces(hiddenSet, pieceToCells);
+    const span = spanForHiddenPieces(hiddenSet, pieceToCells);
+    return { per, span, score: per * 1000 + span };
+  }
+
+  function pickCompactConnectedHiddenSet(k, adj, pieceToCells, rng, opts={}){
+    const restarts = opts.restarts ?? 260;
+    const topChoices = opts.topChoices ?? 3;
+
+    const all = PIECE_IDS;
+    let best = null;
+    let bestScore = Infinity;
+
+    for (let attempt=0; attempt<restarts; attempt++){
+      const start = all[Math.floor(rng() * all.length)];
+      const hidden = new Set([start]);
+
+      const frontier = new Set(adj.get(start));
+      frontier.delete(start);
+
+      while (hidden.size < k){
+        if (frontier.size === 0) break;
+
+        const candidates = [];
+        for (const cand of frontier){
+          const test = new Set(hidden);
+          test.add(cand);
+          const sc = scoreHiddenSet(test, pieceToCells);
+          candidates.push({ cand, sc });
+        }
+        candidates.sort((a,b) => a.sc.score - b.sc.score);
+
+        const pickPool = Math.min(topChoices, candidates.length);
+        const chosen = candidates[Math.floor(rng() * pickPool)].cand;
+
+        frontier.delete(chosen);
+        hidden.add(chosen);
+
+        for (const nb of adj.get(chosen)){
+          if (!hidden.has(nb)) frontier.add(nb);
+        }
+      }
+
+      if (hidden.size !== k) continue;
+
+      const shown = new Set(all.filter(id => !hidden.has(id)));
+      if (!isConnectedSubset(hidden, adj)) continue;
+      if (!isConnectedSubset(shown, adj)) continue;
+
+      const finalSc = scoreHiddenSet(hidden, pieceToCells);
+      if (finalSc.score < bestScore){
+        bestScore = finalSc.score;
+        best = hidden;
+        if (finalSc.per <= 28) break;
+      }
+    }
+
+    return best;
+  }
+
+  function pickRandomHiddenSet(k, rng){
+    const ids = PIECE_IDS.slice();
+    shuffleInPlace(ids, rng);
+    return new Set(ids.slice(0, k));
+  }
+
+  // ------------------------------------------------------------
+  // Puzzle generation
+  // ------------------------------------------------------------
+  function generatePuzzle(){
+    const missingCount = clamp(Number(missingRange.value), 1, 12);
+    const requireAdjacent = !!missingAdjacent.checked;
+
+    setStatus("Üretiliyor…");
+    revealBtn.disabled = true;
+    genBtn.disabled = true;
+
+    setTimeout(() => {
+      const seed = (Date.now() ^ (Math.random() * 1e9)) >>> 0;
+      const rng = mulberry32(seed);
+
+      let finalCellToPiece = null;
+      let finalHidden = null;
+
+      const TILING_TRIES = requireAdjacent ? 20 : 4;
+
+      for (let tilingTry=0; tilingTry<TILING_TRIES && !finalHidden; tilingTry++){
+        let sol = null;
+        for (let tries=0; tries<4 && !sol; tries++) sol = solveOne(rng);
+        if (!sol) continue;
+
+        const cellToPiece = Array(N).fill(null);
+        const pieceToCells = new Map();
+        for (const id of PIECE_IDS) pieceToCells.set(id, []);
+
+        for (const pi of sol){
+          const p = placements[pi];
+          for (const idx of p.cells){
+            cellToPiece[idx] = p.pieceId;
+            pieceToCells.get(p.pieceId).push(idx);
+          }
+        }
+
+        if (!requireAdjacent){
+          finalHidden = pickRandomHiddenSet(missingCount, rng);
+          finalCellToPiece = cellToPiece;
+          break;
+        }
+
+        const adj = buildPieceAdjacency(cellToPiece);
+        const hidden = pickCompactConnectedHiddenSet(missingCount, adj, pieceToCells, rng, {
+          restarts: 260,
+          topChoices: 3,
+        });
+
+        if (hidden){
+          finalHidden = hidden;
+          finalCellToPiece = cellToPiece;
+          break;
+        }
+      }
+
+      if (!finalHidden || !finalCellToPiece){
+        setStatus(requireAdjacent
+          ? "Kompakt (yan yana) bir bulmaca bulunamadı. Tekrar deneyin."
+          : "Çözüm bulunamadı (beklenmeyen hata). Tekrar deneyin."
+        );
+        genBtn.disabled = false;
+        return;
+      }
+
+      hiddenPieces = finalHidden;
+      solutionCellToPiece = finalCellToPiece;
+      reveal = false;
+      revealBtn.textContent = "Cevabı Göster";
+      revealBtn.disabled = false;
+
+      setStatus("Bulmaca hazır");
+      genBtn.disabled = false;
+
+      renderBoard();
+    }, 0);
+  }
+
+  genBtn.addEventListener("click", generatePuzzle);
+
+  // ------------------------------------------------------------
+  // Boot
+  // ------------------------------------------------------------
+  setStatus("Ön hesaplamalar yapılıyor…");
+  initBoardSvg();
+  renderLegend();
+
+  setTimeout(() => {
+    precomputePlacements();
+    setStatus("Hazır");
+    renderBoard();
+  }, 0);
+
+})();
+</script>
+</body>
+</html>
