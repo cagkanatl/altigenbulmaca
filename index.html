@@ -66,8 +66,18 @@
       background:radial-gradient(1200px 420px at 50% 0%, #20263a 0%, #111522 55%, #0b0e15 100%);
       border:1px solid var(--stroke);
       padding:10px;
+      display: flex;
+      justify-content: center;
     }
-    svg{display:block; width:100%; height:auto;}
+    
+    /* YENİ: Ana tahta mobil yan ekranda çok büyümesin diye maksimum yükseklik eklendi */
+    svg{
+      display:block; 
+      width:100%; 
+      max-height: 45vh; 
+      height:auto;
+    }
+    
     .controls{
       display:grid;
       grid-template-columns: 1fr auto auto;
@@ -92,6 +102,7 @@
     input[type="range"]{
       width:min(340px, 100%);
       accent-color:var(--accent);
+      flex: 1;
     }
     input[type="number"]{
       width:72px;
@@ -104,12 +115,15 @@
     }
     input[type="checkbox"]{
       accent-color:var(--accent);
+      width: 18px;
+      height: 18px;
     }
     .checkLabel{
       display:flex;
       align-items:center;
       gap:8px;
       user-select:none;
+      cursor: pointer;
     }
     button{
       padding:10px 12px;
@@ -145,30 +159,30 @@
       border:1px solid var(--stroke);
       background:rgba(255,255,255,.03);
     }
+    
+    /* YENİ: Akıllı Izgara Sistemi (Ekran boyutuna göre otomatik dizilir) */
     .legend{
       display:grid;
-      grid-template-columns: repeat(6, minmax(0,1fr));
+      grid-template-columns: repeat(auto-fill, minmax(135px, 1fr));
       gap:10px;
     }
-    @media (max-width: 720px){
-      .controls{ grid-template-columns: 1fr; }
-      .legend{ grid-template-columns: repeat(3, minmax(0,1fr)); }
-    }
+    
+    /* YENİ: Kutular sığsın diye elemanları daima alt alta diziyoruz */
     .pieceCard{
       background:var(--panel2);
       border:1px solid var(--stroke);
       border-radius:14px;
-      padding:10px;
+      padding:12px 8px;
       display:flex;
+      flex-direction: column;
       gap:10px;
       align-items:center;
-      min-height:74px;
+      text-align: center;
     }
     .pieceLabel{
       display:flex;
       flex-direction:column;
-      gap:6px;
-      min-width:44px;
+      gap:4px;
     }
     .pieceLabel .id{
       font-weight:800;
@@ -179,12 +193,15 @@
       font-size:11px;
       color:var(--muted);
     }
+    
+    /* YENİ: Renk seçici bölümü ortalandı ve düzenlendi */
     .colorPick{
       display:flex;
-      flex-direction:column;
-      gap:6px;
-      margin-left:auto;
-      align-items:flex-end;
+      flex-direction:row;
+      gap:8px;
+      align-items:center;
+      justify-content: center;
+      width: 100%;
     }
     input[type="color"]{
       width:42px;
@@ -205,6 +222,14 @@
       align-items:center;
       justify-content:center;
       overflow:hidden;
+    }
+
+    /* MOBİL VE TABLET KONTROLLERİ */
+    @media (max-width: 720px){
+      body { padding: 10px; }
+      .wrap { gap: 10px; }
+      .controls { grid-template-columns: 1fr; }
+      .controls button { padding: 14px; font-size: 15px; width: 100%; }
     }
   </style>
 </head>
@@ -230,7 +255,7 @@
           </div>
 
           <div class="row">
-            <label class="checkLabel" title="Etkinleştirildiğinde: gizli parçalar birbirine bağlı kompakt bir küme oluşturur; gösterilen parçalar da birbirine bağlı olmalıdır.">
+            <label class="checkLabel" title="Etkinleştirildiğinde: gizli parçalar birbirine bağlı kompakt bir küme oluşturur.">
               <input id="missingAdjacent" type="checkbox" />
               Yan yana eksik (kompakt)
             </label>
@@ -303,8 +328,7 @@
     I: { color: "#ffdd00", coords: [[0,1],[1,1],[2,1],[3,0]] },      
     J: { color: "#737373", coords: [[0,0],[1,0],[1,1],[2,1]] },      
     K: { color: "#a50000", coords: [[0,1],[1,0],[1,1],[2,0]] },      
-    L: { color: "#00c330", coords: [[0,1],[1,1],[2,0],[2,1]] },      
-  };
+    L: { color: "#00c330", coords: [[0,1],[1,1],[2,0],[2,1]] },     
 
   const PIECE_IDS = Object.keys(PIECES);
 
